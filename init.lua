@@ -478,7 +478,19 @@ vim.o.expandtab = true
 vim.o.shiftwidth = 4
 vim.o.tabstop = 4
 vim.o.softtabstop = 4
-vim.o.guicursor = "n-v-c:block-Cursor,i-ci-ve:ver25-Cursor,r-cr-o:hor20"
+vim.opt.guicursor = {
+    "n-v-c:block",
+    "i-ci-ve:ver25",
+    "r-cr:hor20",
+    "o:hor50",
+    "a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor",
+    "sm:block-blinkwait175-blinkoff150-blinkon175"
+}
+vim.api.nvim_create_autocmd("VimLeave", {
+    callback = function()
+        vim.cmd("set guicursor=a:ver25-blinkon1")  -- Reset to I-beam cursor
+    end,
+})
 vim.o.virtualedit = "onemore"
 
 -- Search settings
