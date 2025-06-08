@@ -211,13 +211,22 @@ install_go() {
     sudo tar -C /usr/local -xzf go.tar.gz
     rm go.tar.gz
     
-    # Add Go to PATH if not already there
-    if ! echo $PATH | grep -q "/usr/local/go/bin"; then
-        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-        echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
-        export PATH=$PATH:/usr/local/go/bin
-        export PATH=$PATH:$(go env GOPATH)/bin
+    # Determine shell profile to update
+    local shell_profile=""
+    if [ -f "$HOME/.zshrc" ]; then
+        shell_profile="$HOME/.zshrc"
+    elif [ -f "$HOME/.bashrc" ]; then
+        shell_profile="$HOME/.bashrc"
     fi
+    
+    # Add Go to PATH if not already there
+    if [ -n "$shell_profile" ] && ! grep -q "/usr/local/go/bin" "$shell_profile"; then
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> "$shell_profile"
+        echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> "$shell_profile"
+    fi
+    
+    export PATH=$PATH:/usr/local/go/bin
+    export PATH=$PATH:$(go env GOPATH)/bin
     
     print_success "Go installed successfully"
 }
@@ -335,13 +344,13 @@ post_install_setup() {
     
     # Add environment variables to shell profile if not already there
     local shell_profile=""
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -f "$HOME/.zshrc" ]; then
         shell_profile="$HOME/.zshrc"
-    elif [ -n "$BASH_VERSION" ]; then
+    elif [ -f "$HOME/.bashrc" ]; then
         shell_profile="$HOME/.bashrc"
     fi
     
-    if [ -n "$shell_profile" ] && [ -f "$shell_profile" ]; then
+    if [ -n "$shell_profile" ]; then
         if ! grep -q "/usr/local/go/bin" "$shell_profile"; then
             echo "" >> "$shell_profile"
             echo "# Added by Neovim installer" >> "$shell_profile"
