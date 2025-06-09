@@ -40,9 +40,32 @@ require("lazy").setup({
     { "L3MON4D3/LuaSnip" },         -- Snippets
     { "saadparwaiz1/cmp_luasnip" }, -- Snippet completions
 
-    -- Syntax Highlighting
-    { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
-    { "JoosepAlviste/nvim-ts-context-commentstring" }, -- Context-aware comments
+    -- Syntax Highlighting (Updated)
+    { 
+        "nvim-treesitter/nvim-treesitter", 
+        build = ":TSUpdate",
+        config = function()
+            require("nvim-treesitter.configs").setup({
+                ensure_installed = { "c", "cpp", "lua", "go", "html", "css", "javascript", "typescript", "templ" },
+                sync_install = false,
+                auto_install = true,
+                highlight = {
+                    enable = true,
+                    additional_vim_regex_highlighting = false,
+                },
+                autotag = { enable = true },
+                incremental_selection = {
+                    enable = true,
+                    keymaps = {
+                        init_selection = "gnn",
+                        node_incremental = "grn",
+                        scope_incremental = "grc",
+                        node_decremental = "grm",
+                    },
+                },
+            })
+        end,
+    },
 
     -- File Explorer and Navigation
     { "nvim-tree/nvim-tree.lua", dependencies = { "nvim-tree/nvim-web-devicons" } },
@@ -77,7 +100,7 @@ require("lazy").setup({
     -- Additional Utilities
     { "nvim-lualine/lualine.nvim" }, -- Statusline
     { "NumToStr/Comment.nvim" },     -- Better commenting
-    { "lukas-reineke/indent-blankline.nvim" },
+    { "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {} },
     { "windwp/nvim-autopairs" },     -- Auto pairs for brackets
     { "kyazdani42/nvim-web-devicons" }, -- Better icons
     { "folke/which-key.nvim" },      -- Show keybindings
@@ -156,6 +179,10 @@ if cmp and luasnip then
                 luasnip.lsp_expand(args.body)
             end,
         },
+        window = {
+            completion = cmp.config.window.bordered(),
+            documentation = cmp.config.window.bordered(),
+        },
         mapping = cmp.mapping.preset.insert({
             ["<C-b>"] = cmp.mapping.scroll_docs(-4),
             ["<C-f>"] = cmp.mapping.scroll_docs(4),
@@ -184,6 +211,7 @@ if cmp and luasnip then
         sources = cmp.config.sources({
             { name = "nvim_lsp" },
             { name = "luasnip" },
+        }, {
             { name = "buffer" },
             { name = "path" },
         }),
@@ -213,6 +241,15 @@ if lspconfig then
         cmd = { "gopls" },
         filetypes = { "go", "gomod" },
         root_dir = lspconfig.util.root_pattern("go.work", "go.mod", ".git"),
+        settings = {
+            gopls = {
+                analyses = {
+                    unusedparams = true,
+                },
+                staticcheck = true,
+                gofumpt = true,
+            },
+        },
         on_attach = function(client, bufnr)
             local opts = { noremap = true, silent = true, buffer = bufnr }
             vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
@@ -239,31 +276,13 @@ if lspconfig then
     })
 end
 
--- Treesitter Configuration (Updated - no deprecated context_commentstring)
-local treesitter = safe_require("nvim-treesitter.configs")
-if treesitter then
-    treesitter.setup({
-        ensure_installed = { "c", "cpp", "lua", "go", "html", "css", "javascript", "typescript", "templ" },
-        highlight = { enable = true },
-        autotag = { enable = true },
-    })
-end
-
--- Context commentstring setup (new way)
-local ts_context_commentstring = safe_require('ts_context_commentstring')
-if ts_context_commentstring then
-    ts_context_commentstring.setup({
-        enable_autocmd = false,
-    })
-    -- Set the global variable to speed up loading
-    vim.g.skip_ts_context_commentstring_module = true
-end
-
 -- Telescope Configuration
 local telescope = safe_require("telescope")
 if telescope then
     telescope.setup({
         defaults = {
+            prompt_prefix = " ",
+            selection_caret = " ",
             mappings = {
                 i = {
                     ["<C-j>"] = "move_selection_next",
@@ -276,6 +295,7 @@ if telescope then
                 fuzzy = true,
                 override_generic_sorter = true,
                 override_file_sorter = true,
+                case_mode = "smart_case",
             },
         },
     })
@@ -288,6 +308,10 @@ end
 -- File Explorer Configuration
 local nvim_tree = safe_require("nvim-tree")
 if nvim_tree then
+    -- Disable netrw at startup
+    vim.g.loaded_netrw = 1
+    vim.g.loaded_netrwPlugin = 1
+
     nvim_tree.setup({
         git = {
             enable = true,
@@ -297,7 +321,10 @@ if nvim_tree then
             side = "right",
             width = 60,
         },
-        update_cwd = true,
+        update_focused_file = {
+            enable = true,
+            update_cwd = true,
+        },
         renderer = {
             icons = {
                 show = {
@@ -317,6 +344,7 @@ if vscode then
     vscode.setup({
         transparent = false,
         italic_comments = true,
+        disable_nvimtree_bg = true,
     })
     vim.cmd.colorscheme("vscode")
 else
@@ -335,6 +363,16 @@ if gitsigns then
             topdelete = { text = "‾" },
             changedelete = { text = "~" },
         },
+        signcolumn = true,
+        numhl = false,
+        linehl = false,
+        word_diff = false,
+        watch_gitdir = {
+            interval = 1000,
+            follow_files = true
+        },
+        attach_to_untracked = true,
+        current_line_blame = false,
         on_attach = function(bufnr)
             local gs = package.loaded.gitsigns
 
@@ -381,23 +419,25 @@ end
 local toggleterm = safe_require("toggleterm")
 if toggleterm then
     toggleterm.setup({
+        size = 20,
         open_mapping = [[<c-\>]],
+        hide_numbers = true,
+        shade_filetypes = {},
+        shade_terminals = true,
+        shading_factor = 2,
+        start_in_insert = true,
+        insert_mappings = true,
+        persist_size = true,
         direction = "float",
-        close_on_exit = false,  -- Keep terminal open after process exits
-    })
-end
-
--- Indentation Guides
-local ibl = safe_require("ibl")
-if ibl then
-    ibl.setup({
-        indent = {
-            char = "│", -- or another character you prefer
-        },
-        scope = {
-            enabled = true, -- Enable showing indentation scope
-            show_start = true, -- Show the start of the scope
-            show_end = false, -- Optionally show the end of the scope
+        close_on_exit = true,
+        shell = vim.o.shell,
+        float_opts = {
+            border = "curved",
+            winblend = 0,
+            highlights = {
+                border = "Normal",
+                background = "Normal",
+            },
         },
     })
 end
@@ -407,58 +447,201 @@ local lualine = safe_require("lualine")
 if lualine then
     lualine.setup({
         options = {
-            theme = "auto", -- Changed from "vscode" to "auto" for fallback
+            icons_enabled = true,
+            theme = "auto",
+            component_separators = { left = "", right = ""},
+            section_separators = { left = "", right = ""},
+            disabled_filetypes = {
+                statusline = {},
+                winbar = {},
+            },
+            ignore_focus = {},
+            always_divide_middle = true,
+            globalstatus = false,
+            refresh = {
+                statusline = 1000,
+                tabline = 1000,
+                winbar = 1000,
+            }
         },
+        sections = {
+            lualine_a = {'mode'},
+            lualine_b = {'branch', 'diff', 'diagnostics'},
+            lualine_c = {'filename'},
+            lualine_x = {'encoding', 'fileformat', 'filetype'},
+            lualine_y = {'progress'},
+            lualine_z = {'location'}
+        },
+        inactive_sections = {
+            lualine_a = {},
+            lualine_b = {},
+            lualine_c = {'filename'},
+            lualine_x = {'location'},
+            lualine_y = {},
+            lualine_z = {}
+        },
+        tabline = {},
+        winbar = {},
+        inactive_winbar = {},
+        extensions = {}
     })
 end
 
--- Comment Configuration (Updated)
+-- Comment Configuration (Simplified)
 local comment = safe_require("Comment")
 if comment then
-    local ts_context_integration = safe_require('ts_context_commentstring.integrations.comment_nvim')
-    if ts_context_integration then
-        comment.setup({
-            pre_hook = ts_context_integration.create_pre_hook(),
-        })
-    else
-        comment.setup({})
-    end
+    comment.setup({
+        padding = true,
+        sticky = true,
+        ignore = nil,
+        toggler = {
+            line = 'gcc',
+            block = 'gbc',
+        },
+        opleader = {
+            line = 'gc',
+            block = 'gb',
+        },
+        extra = {
+            above = 'gcO',
+            below = 'gco',
+            eol = 'gcA',
+        },
+        mappings = {
+            basic = true,
+            extra = true,
+        },
+    })
 end
 
 -- Auto pairs Configuration
 local autopairs = safe_require("nvim-autopairs")
 if autopairs then
-    autopairs.setup({})
+    autopairs.setup({
+        check_ts = true,
+        ts_config = {
+            lua = {'string'},
+            javascript = {'template_string'},
+            java = false,
+        }
+    })
+    
+    -- Integration with nvim-cmp
+    if cmp then
+        local cmp_autopairs = safe_require("nvim-autopairs.completion.cmp")
+        if cmp_autopairs then
+            cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+        end
+    end
 end
 
 -- Which-key Configuration
 local which_key = safe_require("which-key")
 if which_key then
-    which_key.setup({})
+    which_key.setup({
+        plugins = {
+            marks = true,
+            registers = true,
+            spelling = {
+                enabled = true,
+                suggestions = 20,
+            },
+            presets = {
+                operators = true,
+                motions = true,
+                text_objects = true,
+                windows = true,
+                nav = true,
+                z = true,
+                g = true,
+            },
+        },
+    })
 end
 
 -- Trouble Configuration
 local trouble = safe_require("trouble")
 if trouble then
-    trouble.setup({})
+    trouble.setup({
+        position = "bottom",
+        height = 10,
+        width = 50,
+        icons = true,
+        mode = "workspace_diagnostics",
+        fold_open = "",
+        fold_closed = "",
+        group = true,
+        padding = true,
+        action_keys = {
+            close = "q",
+            cancel = "<esc>",
+            refresh = "r",
+            jump = {"<cr>", "<tab>"},
+            open_split = { "<c-x>" },
+            open_vsplit = { "<c-v>" },
+            open_tab = { "<c-t>" },
+            jump_close = {"o"},
+            toggle_mode = "m",
+            toggle_preview = "P",
+            hover = "K",
+            preview = "p",
+            close_folds = {"zM", "zm"},
+            open_folds = {"zR", "zr"},
+            toggle_fold = {"zA", "za"},
+            previous = "k",
+            next = "j"
+        },
+        indent_lines = true,
+        auto_open = false,
+        auto_close = false,
+        auto_preview = true,
+        auto_fold = false,
+        auto_jump = {"lsp_definitions"},
+        signs = {
+            error = "",
+            warning = "",
+            hint = "",
+            information = "",
+            other = "﫠"
+        },
+        use_diagnostic_signs = false
+    })
 end
 
--- Formatting and Linting Configuration (Updated to use none-ls with optional ESLint)
+-- Formatting and Linting Configuration (Updated to use none-ls)
 local null_ls = safe_require("null-ls")
 if null_ls then
+    local formatting = null_ls.builtins.formatting
+    local diagnostics = null_ls.builtins.diagnostics
+
     local sources = {
-        null_ls.builtins.formatting.prettier,
-        null_ls.builtins.formatting.gofmt,
-        null_ls.builtins.formatting.clang_format,
+        formatting.prettier.with({
+            extra_filetypes = { "toml", "solidity" },
+        }),
+        formatting.gofmt,
+        formatting.clang_format,
     }
 
     -- Only add eslint if it's available
     if vim.fn.executable("eslint") == 1 then
-        table.insert(sources, null_ls.builtins.diagnostics.eslint)
+        table.insert(sources, diagnostics.eslint)
     end
 
     null_ls.setup({
+        debug = false,
         sources = sources,
+        on_attach = function(client, bufnr)
+            if client.supports_method("textDocument/formatting") then
+                vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+                vim.api.nvim_create_autocmd("BufWritePre", {
+                    group = augroup,
+                    buffer = bufnr,
+                    callback = function()
+                        vim.lsp.buf.format()
+                    end,
+                })
+            end
+        end,
     })
 end
 
@@ -466,10 +649,11 @@ end
 vim.o.background = "dark"
 vim.o.number = true
 vim.o.relativenumber = true        -- Show relative line numbers
-vim.o.scrolloff = 5
-vim.o.sidescrolloff = 5
+vim.o.scrolloff = 8                -- Keep 8 lines visible when scrolling
+vim.o.sidescrolloff = 8
 vim.o.cursorline = true           -- Highlight current line
 vim.o.signcolumn = "yes"          -- Always show sign column
+vim.o.wrap = false                -- No line wrapping
 
 -- Enable auto-indentation
 vim.o.autoindent = true
@@ -478,6 +662,8 @@ vim.o.expandtab = true
 vim.o.shiftwidth = 4
 vim.o.tabstop = 4
 vim.o.softtabstop = 4
+
+-- Cursor configuration
 vim.opt.guicursor = {
     "n-v-c:block",
     "i-ci-ve:ver25",
@@ -486,11 +672,14 @@ vim.opt.guicursor = {
     "a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor",
     "sm:block-blinkwait175-blinkoff150-blinkon175"
 }
+
+-- Reset cursor on exit
 vim.api.nvim_create_autocmd("VimLeave", {
     callback = function()
-        vim.cmd("set guicursor=a:ver25-blinkon1")  -- Reset to I-beam cursor
+        vim.cmd("set guicursor=a:ver25-blinkon1")
     end,
 })
+
 vim.o.virtualedit = "onemore"
 
 -- Search settings
@@ -511,3 +700,30 @@ vim.o.swapfile = false
 -- Undo settings
 vim.o.undofile = true             -- Persistent undo
 vim.o.undolevels = 10000          -- Maximum number of undos
+
+-- Additional performance improvements
+vim.o.hidden = true               -- Allow hidden buffers
+vim.o.mouse = "a"                 -- Enable mouse support
+vim.o.clipboard = "unnamedplus"   -- Use system clipboard
+vim.o.completeopt = "menuone,noselect" -- Better completion experience
+
+-- Highlight on yank
+vim.api.nvim_create_autocmd("TextYankPost", {
+    callback = function()
+        vim.highlight.on_yank()
+    end,
+    group = vim.api.nvim_create_augroup("YankHighlight", { clear = true }),
+    pattern = "*",
+})
+
+-- Auto-create directories when saving files
+vim.api.nvim_create_autocmd("BufWritePre", {
+    group = vim.api.nvim_create_augroup("auto_create_dir", { clear = true }),
+    callback = function(event)
+        if event.match:match("^%w%w+://") then
+            return
+        end
+        local file = vim.loop.fs_realpath(event.match) or event.match
+        vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
+    end,
+})
