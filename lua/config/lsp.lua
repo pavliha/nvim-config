@@ -1,0 +1,44 @@
+-- LSP keybindings (shared across all servers)
+vim.api.nvim_create_autocmd("LspAttach", {
+    callback = function(args)
+        local opts = { noremap = true, silent = true, buffer = args.buf }
+        vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+        vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+        vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+        vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+        vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+        vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+        vim.keymap.set("n", "<leader>f", function()
+            vim.lsp.buf.format({ async = true })
+        end, opts)
+    end,
+})
+
+-- Configure LSP servers (Neovim 0.11+ native API)
+vim.lsp.config.clangd = {
+    cmd = { "clangd" },
+    filetypes = { "c", "cpp", "objc", "objcpp" },
+    root_markers = { "compile_commands.json", ".git" },
+}
+
+vim.lsp.config.gopls = {
+    cmd = { "gopls" },
+    filetypes = { "go", "gomod", "gowork", "gotmpl" },
+    root_markers = { "go.work", "go.mod", ".git" },
+    settings = {
+        gopls = {
+            analyses = { unusedparams = true },
+            staticcheck = true,
+            gofumpt = true,
+        },
+    },
+}
+
+vim.lsp.config.templ = {
+    cmd = { "templ", "lsp" },
+    filetypes = { "templ" },
+    root_markers = { "go.mod", ".git" },
+}
+
+-- Enable servers
+vim.lsp.enable({ "clangd", "gopls", "templ" })
