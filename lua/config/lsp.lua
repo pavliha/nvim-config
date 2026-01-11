@@ -40,5 +40,57 @@ vim.lsp.config.templ = {
     root_markers = { "go.mod", ".git" },
 }
 
+-- TypeScript/JavaScript
+vim.lsp.config.ts_ls = {
+    cmd = { "typescript-language-server", "--stdio" },
+    filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
+    root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
+    settings = {
+        completions = { completeFunctionCalls = true },
+    },
+}
+
+-- CSS
+vim.lsp.config.cssls = {
+    cmd = { "vscode-css-language-server", "--stdio" },
+    filetypes = { "css", "scss", "less" },
+    root_markers = { "package.json", ".git" },
+}
+
+-- HTML
+vim.lsp.config.html = {
+    cmd = { "vscode-html-language-server", "--stdio" },
+    filetypes = { "html", "templ" },
+    root_markers = { "package.json", ".git" },
+}
+
+-- JSON
+vim.lsp.config.jsonls = {
+    cmd = { "vscode-json-language-server", "--stdio" },
+    filetypes = { "json", "jsonc" },
+    root_markers = { ".git" },
+}
+
+-- Tailwind CSS
+vim.lsp.config.tailwindcss = {
+    cmd = { "tailwindcss-language-server", "--stdio" },
+    filetypes = { "html", "css", "scss", "javascript", "javascriptreact", "typescript", "typescriptreact" },
+    root_markers = { "tailwind.config.js", "tailwind.config.ts", "tailwind.config.cjs" },
+}
+
+-- ESLint
+vim.lsp.config.eslint = {
+    cmd = { "vscode-eslint-language-server", "--stdio" },
+    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+    root_markers = { ".eslintrc", ".eslintrc.js", ".eslintrc.json", "eslint.config.js" },
+}
+
+-- Emmet
+vim.lsp.config.emmet_ls = {
+    cmd = { "emmet-ls", "--stdio" },
+    filetypes = { "html", "css", "scss", "javascriptreact", "typescriptreact" },
+    root_markers = { ".git" },
+}
+
 -- Enable servers
-vim.lsp.enable({ "clangd", "gopls", "templ" })
+vim.lsp.enable({ "clangd", "gopls", "templ", "ts_ls", "cssls", "html", "jsonls", "tailwindcss", "eslint", "emmet_ls" })

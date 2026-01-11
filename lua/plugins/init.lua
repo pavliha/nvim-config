@@ -179,7 +179,12 @@ return {
     { "a-h/templ", ft = "templ" },
 
     -- Web Development
-    { "windwp/nvim-ts-autotag" },
+    {
+        "windwp/nvim-ts-autotag",
+        config = function()
+            require("nvim-ts-autotag").setup()
+        end,
+    },
     {
         "norcalli/nvim-colorizer.lua",
         config = function()
@@ -198,6 +203,35 @@ return {
                 direction = "float",
                 float_opts = { border = "curved" },
             })
+        end,
+    },
+
+    -- Bufferline (tabs like WebStorm)
+    {
+        "akinsho/bufferline.nvim",
+        version = "*",
+        dependencies = "nvim-tree/nvim-web-devicons",
+        config = function()
+            require("bufferline").setup({
+                options = {
+                    diagnostics = "nvim_lsp",
+                    offsets = {
+                        { filetype = "NvimTree", text = "File Explorer", highlight = "Directory", separator = true },
+                    },
+                    show_buffer_close_icons = true,
+                    show_close_icon = false,
+                    separator_style = "thin",
+                },
+            })
+        end,
+    },
+
+    -- Search and replace (like WebStorm)
+    {
+        "nvim-pack/nvim-spectre",
+        dependencies = "nvim-lua/plenary.nvim",
+        config = function()
+            require("spectre").setup()
         end,
     },
 
@@ -241,6 +275,115 @@ return {
     {
         "folke/trouble.nvim",
         opts = {},
+    },
+
+    -- Multiple cursors (like WebStorm Alt+Click)
+    { "mg979/vim-visual-multi" },
+
+    -- TODO comments highlighting
+    {
+        "folke/todo-comments.nvim",
+        dependencies = "nvim-lua/plenary.nvim",
+        config = function()
+            require("todo-comments").setup()
+        end,
+    },
+
+    -- Code outline (like WebStorm Structure view)
+    {
+        "stevearc/aerial.nvim",
+        config = function()
+            require("aerial").setup({
+                backends = { "lsp", "treesitter", "markdown", "man" },
+                layout = { min_width = 30 },
+                show_guides = true,
+                filter_kind = false,
+            })
+        end,
+    },
+
+    -- Better LSP UI (code actions, rename, etc.)
+    {
+        "nvimdev/lspsaga.nvim",
+        dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+        config = function()
+            require("lspsaga").setup({
+                symbol_in_winbar = { enable = true },
+                lightbulb = { enable = false },
+                ui = { border = "rounded" },
+            })
+        end,
+    },
+
+    -- Quick file navigation (bookmarks)
+    {
+        "ThePrimeagen/harpoon",
+        branch = "harpoon2",
+        dependencies = "nvim-lua/plenary.nvim",
+        config = function()
+            require("harpoon"):setup()
+        end,
+    },
+
+    -- Parameter hints
+    {
+        "ray-x/lsp_signature.nvim",
+        config = function()
+            require("lsp_signature").setup({
+                bind = true,
+                hint_enable = true,
+                hint_prefix = " ",
+                handler_opts = { border = "rounded" },
+            })
+        end,
+    },
+
+    -- Test runner (like WebStorm test runner)
+    {
+        "nvim-neotest/neotest",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-treesitter/nvim-treesitter",
+            "nvim-neotest/neotest-go",
+            "nvim-neotest/neotest-jest",
+        },
+        config = function()
+            require("neotest").setup({
+                adapters = {
+                    require("neotest-go"),
+                    require("neotest-jest")({
+                        jestCommand = "npm test --",
+                    }),
+                },
+            })
+        end,
+    },
+
+    -- Session management
+    {
+        "folke/persistence.nvim",
+        event = "BufReadPre",
+        config = function()
+            require("persistence").setup()
+        end,
+    },
+
+    -- Markdown preview (opens in browser)
+    {
+        "iamcco/markdown-preview.nvim",
+        cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+        ft = { "markdown" },
+        build = "cd app && npm install",
+    },
+
+    -- Surround text (change quotes, brackets)
+    {
+        "kylechui/nvim-surround",
+        version = "*",
+        event = "VeryLazy",
+        config = function()
+            require("nvim-surround").setup()
+        end,
     },
 
     -- Formatting
